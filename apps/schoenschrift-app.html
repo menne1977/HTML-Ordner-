@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schrift &amp; Wort – Schönschrift-Übungen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Caveat&family=Dancing+Script:wght@400..700&family=Indie+Flower&family=Kalam&family=Patrick+Hand&family=Playpen+Sans&family=Schoolbell&family=Noto+Sans&family=Noto+Sans+Arabic&family=Noto+Sans+Devanagari&family=Noto+Sans+Hebrew&family=Noto+Sans+JP&family=Noto+Sans+KR&family=Noto+Sans+SC&display=swap" rel="stylesheet">
+<style>
+  :root { --fs: 44px; --rh: calc(var(--fs) * 2.1); }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #f4f1ea; color: #1d2b3a; }
+  h1 { font-size: 20px; margin: 0; }
+  header { padding: 14px 16px 0; max-width: 1300px; margin: auto; }
+  header p { margin: 4px 0 0; font-size: 13px; color: #666; }
+  .app { display: grid; grid-template-columns: 320px 1fr; gap: 16px; padding: 16px; max-width: 1300px; margin: auto; }
+  @media (max-width: 820px) { .app { grid-template-columns: 1fr; } }
+  .panel { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px #0002; align-self: start; }
+  .panel h2 { font-size: 15px; margin: 0 0 6px; }
+  label { display: block; font-size: 13px; margin: 10px 0 4px; color: #333; }
+  textarea, select { width: 100%; padding: 6px; font: inherit; font-size: 14px; border: 1px solid #ccc; border-radius: 6px; }
+  textarea { height: 150px; resize: vertical; }
+  .inline { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-top: 8px; }
+  button { padding: 8px 12px; border: 0; border-radius: 8px; background: #2f6fb0; color: #fff; cursor: pointer; margin: 6px 6px 0 0; font-size: 14px; }
+  button.alt { background: #e3e3e3; color: #222; }
+  .small { font-size: 12px; color: #777; margin-top: 6px; line-height: 1.4; }
+  .sheet { background: #fff; padding: 24px 28px; border-radius: 12px; box-shadow: 0 1px 4px #0002; min-height: 300px; }
+  .entry { margin-bottom: 18px; break-inside: avoid; }
+  .wlabel { font-size: 12px; color: #888; margin-bottom: 2px; }
+  .roman { font-size: 13px; color: #666; margin: 4px 0 0 4px; }
+  .hint { font-size: 12px; color: #b35; margin: 4px 0; }
+  .word-block { margin-bottom: 4px; }
+  .row { position: relative; height: var(--rh); }
+  .row i { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid #7fa9d6; display: block; }
+  .row i.dash { border-top-style: dashed; border-top-color: #b9d2ea; }
+  .row i.base { border-top-color: #3f77b8; }
+  .row .tpl { position: absolute; left: 6px; bottom: 14%; font-size: var(--fs); line-height: 1; color: #b0b0b0; white-space: nowrap; }
+  .row .tpl.faint { color: #dedede; }
+  .row .tpl.rtl { left: auto; right: 6px; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #555; margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+  .legend b { display: inline-block; width: 22px; border-top: 1px solid #7fa9d6; }
+  .legend b.dash { border-top-style: dashed; border-top-color: #b9d2ea; }
+  .legend b.base { border-top-color: #3f77b8; }
+
+  @media print {
+    @page { size: A4; margin: 12mm; }
+    body { background: #fff; }
+    .no-print { display: none !important; }
+    .app { display: block; padding: 0; }
+    .sheet { box-shadow: none; padding: 0; border-radius: 0; }
+    .row i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .wlabel { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="no-print">
+  <h1>Schrift &amp; Wort – Schönschrift-Übungen</h1>
+  <p>Wörter eingeben, Schrift und Übungsart wählen, Übersetzung optional dazu, dann drucken. Die Schriften kommen von Google Fonts (Internet nötig).</p>
+</header>
+
+<div class="app">
+  <aside class="panel no-print">
+    <h2>1. Wörter</h2>
+    <textarea id="input" spellcheck="false" placeholder="Ein Wort pro Zeile, z. B.&#10;Haus&#10;Baum&#10;Haus=House (optional mit Übersetzung)"></textarea>
+    <button id="apply">Liste übernehmen</button>
+    <button id="examples" class="alt">Beispielwörter</button>
+    <div class="small">Trennen mit Zeilenumbruch, Komma oder Semikolon. „Wort=Übersetzung“ setzt eine eigene Übersetzung.</div>
+
+    <h2 style="margin-top:16px">2. Schrift &amp; Übung</h2>
+    <label for="font">Schrift</label>
+    <select id="font">
+      <optgroup label="Druckschrift">
+        <option value="'Patrick Hand', sans-serif">Patrick Hand</option>
+        <option value="'Schoolbell', cursive">Schoolbell</option>
+        <option value="'Architects Daughter', cursive">Architects Daughter</option>
+        <option value="'Playpen Sans', cursive">Playpen Sans</option>
+      </optgroup>
+      <optgroup label="Schreibschrift (Handschrift-Stil)">
+        <option value="'Dancing Script', cursive">Dancing Script</option>
+        <option value="'Caveat', cursive">Caveat</option>
+        <option value="'Kalam', cursive">Kalam</option>
+        <option value="'Indie Flower', cursive">Indie Flower</option>
+      </optgroup>
+      <optgroup label="Standard">
+        <option value="'Noto Sans', sans-serif">Sans (Standard)</option>
+        <option value="Georgia, serif">Serif (Standard)</option>
+      </optgroup>
+    </select>
+
+    <label for="mode">Übungsart</label>
+    <select id="mode">
+      <option value="trace">Nachspuren – Vorlage in jeder Zeile</option>
+      <option value="first">Abschreiben – Vorlage nur in erster Zeile</option>
+      <option value="blank">Frei – nur Linien</option>
+    </select>
+
+    <label for="lang">Übersetzung (weltweit)</label>
+    <select id="lang">
+      <option value="">– keine Übersetzung –</option>
+      <option value="en">Englisch</option>
+      <option value="fr">Französisch</option>
+      <option value="es">Spanisch</option>
+      <option value="it">Italienisch</option>
+      <option value="tr">Türkisch</option>
+      <option value="ru">Russisch (Kyrillisch)</option>
+      <option value="el">Griechisch</option>
+      <option value="ar">Arabisch</option>
+      <option value="he">Hebräisch</option>
+      <option value="hi">Hindi (Devanagari)</option>
+      <option value="ja">Japanisch</option>
+      <option value="zh">Chinesisch (vereinfacht)</option>
+      <option value="ko">Koreanisch</option>
+    </select>
+    <div class="inline"><input type="checkbox" id="roman" checked> Aussprache / Umschrift anzeigen</div>
+
+    <label for="size">Schriftgröße: <span id="sizeVal">44</span> px</label>
+    <input type="range" id="size" min="24" max="80" value="44" style="width:100%">
+
+    <label for="rows">Zeilen pro Wort</label>
+    <select id="rows">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3" selected>3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+    </select>
+
+    <button id="print" style="margin-top:14px;width:100%">Drucken / als PDF speichern</button>
+
+    <div class="legend">
+      <span><b></b>Oberlinie</span>
+      <span><b class="dash"></b>Mittellinie</span>
+      <span><b class="base"></b>Grundlinie</span>
+    </div>
+  </aside>
+
+  <main class="sheet" id="sheet"></main>
+</div>
+
+<script>
+const DE = ['Haus','Baum','Sonne','Wasser','Katze','Hund','Schule','Buch','Apfel','Freund'];
+
+const LANGS = {
+  en: { name:'Englisch', dir:'ltr', w:['House','Tree','Sun','Water','Cat','Dog','School','Book','Apple','Friend'] },
+  fr: { name:'Französisch', dir:'ltr', w:['Maison','Arbre','Soleil','Eau','Chat','Chien','École','Livre','Pomme','Ami'] },
+  es: { name:'Spanisch', dir:'ltr', w:['Casa','Árbol','Sol','Agua','Gato','Perro','Escuela','Libro','Manzana','Amigo'] },
+  it: { name:'Italienisch', dir:'ltr', w:['Casa','Albero','Sole','Acqua','Gatto','Cane','Scuola','Libro','Mela','Amico'] },
+  tr: { name:'Türkisch', dir:'ltr', w:['Ev','Ağaç','Güneş','Su','Kedi','Köpek','Okul','Kitap','Elma','Arkadaş'] },
+  ru: { name:'Russisch', dir:'ltr', font:'Noto Sans', w:['Дом','Дерево','Солнце','Вода','Кошка','Собака','Школа','Книга','Яблоко','Друг'],
+        r:['Dom','Derevo','Solntse','Voda','Koshka','Sobaka','Shkola','Kniga','Yabloko','Drug'] },
+  el: { name:'Griechisch', dir:'ltr', font:'Noto Sans', w:['Σπίτι','Δέντρο','Ήλιος','Νερό','Γάτα','Σκύλος','Σχολείο','Βιβλίο','Μήλο','Φίλος'],
+        r:['spiti','dentro','ilios','nero','gata','skilos','scholeio','vivlio','milo','filos'] },
+  ar: { name:'Arabisch', dir:'rtl', font:'Noto Sans Arabic', w:['بيت','شجرة','شمس','ماء','قطة','كلب','مدرسة','كتاب','تفاحة','صديق'],
+        r:['bayt','shajara','shams','maa','qitta','kalb','madrasa','kitaab','tuffaha','sadiq'] },
+  he: { name:'Hebräisch', dir:'rtl', font:'Noto Sans Hebrew', w:['בית','עץ','שמש','מים','חתול','כלב','בית ספר','ספר','תפוח','חבר'],
+        r:['bayit','ets','shemesh','mayim','chatul','kelev','beit sefer','sefer','tapuach','chaver'] },
+  hi: { name:'Hindi', dir:'ltr', font:'Noto Sans Devanagari', w:['घर','पेड़','सूरज','पानी','बिल्ली','कुत्ता','स्कूल','किताब','सेब','दोस्त'],
+        r:['ghar','ped','suraj','paani','billi','kutta','school','kitaab','seb','dost'] },
+  ja: { name:'Japanisch', dir:'ltr', font:'Noto Sans JP', w:['家','木','太陽','水','猫','犬','学校','本','りんご','友達'],
+        r:['ie','ki','taiyou','mizu','neko','inu','gakkou','hon','ringo','tomodachi'] },
+  zh: { name:'Chinesisch', dir:'ltr', font:'Noto Sans SC', w:['房子','树','太阳','水','猫','狗','学校','书','苹果','朋友'],
+        r:['fángzi','shù','tàiyáng','shuǐ','māo','gǒu','xuéxiào','shū','píngguǒ','péngyou'] },
+  ko: { name:'Koreanisch', dir:'ltr', font:'Noto Sans KR', w:['집','나무','해','물','고양이','개','학교','책','사과','친구'],
+        r:['jip','namu','hae','mul','goyangi','gae','hakgyo','chaek','sagwa','chingu'] }
+};
+
+const DEFAULT_LIST = 'Haus\nBaum\nSonne\nWasser\nSchule\nFreund';
+let items = [];
+
+function $(id) { return document.getElementById(id); }
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function parse(text) {
+  return text.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean).map(s => {
+    const parts = s.split('=');
+    return { de: parts[0].trim(), tr: parts.slice(1).join('=').trim() };
+  }).filter(x => x.de);
+}
+
+function makeRow(tplText, fontCss, faint, dir) {
+  const row = el('div', 'row');
+  [['', 0], ['dash', 45], ['base', 78], ['', 100]].forEach(([cls, pos]) => {
+    const line = el('i', cls);
+    line.style.top = pos + '%';
+    row.appendChild(line);
+  });
+  if (tplText) {
+    const t = el('span', 'tpl' + (faint ? ' faint' : '') + (dir === 'rtl' ? ' rtl' : ''), tplText);
+    t.style.fontFamily = fontCss;
+    row.appendChild(t);
+  }
+  return row;
+}
+
+function makeBlock(text, fontCss, dir, roman, mode, rows) {
+  const b = el('div', 'word-block');
+  if (roman) b.appendChild(el('div', 'roman', roman));
+  for (let i = 0; i < rows; i++) {
+    const show = mode === 'trace' || (mode === 'first' && i === 0);
+    b.appendChild(makeRow(show ? text : '', fontCss, mode === 'trace' && i > 0, dir));
+  }
+  return b;
+}
+
+function render() {
+  const size = $('size').value;
+  $('sizeVal').textContent = size;
+  document.documentElement.style.setProperty('--fs', size + 'px');
+
+  const fontCss = $('font').value;
+  const mode = $('mode').value;
+  const rows = parseInt($('rows').value, 10);
+  const langKey = $('lang').value;
+  const lang = langKey ? LANGS[langKey] : null;
+  const showRoman = $('roman').checked;
+
+  const sheet = $('sheet');
+  sheet.innerHTML = '';
+
+  if (items.length === 0) {
+    sheet.appendChild(el('div', 'hint', 'Noch keine Wörter eingegeben.'));
+    return;
+  }
+
+  items.forEach(it => {
+    const wrap = el('div', 'entry');
+    wrap.appendChild(el('div', 'wlabel', it.de));
+    wrap.appendChild(makeBlock(it.de, fontCss, 'ltr', '', mode, rows));
+
+    const idx = DE.indexOf(it.de);
+    if (lang) {
+      const tr = it.tr || (idx >= 0 ? lang.w[idx] : null);
+      if (tr) {
+        const roman = showRoman && lang.r && idx >= 0 && !it.tr ? lang.r[idx] : '';
+        const f = lang.font ? `'${lang.font}', sans-serif` : fontCss;
+        wrap.appendChild(makeBlock(tr, f, lang.dir, roman, mode, rows));
+      } else {
+        wrap.appendChild(el('div', 'hint', 'Keine Übersetzung hinterlegt – „' + it.de + '=Übersetzung“ eintragen.'));
+      }
+    } else if (it.tr) {
+      wrap.appendChild(makeBlock(it.tr, fontCss, 'ltr', '', mode, rows));
+    }
+    sheet.appendChild(wrap);
+  });
+}
+
+function applyList(text) {
+  items = parse(text);
+  try { localStorage.setItem('schriftwort-liste', text); } catch (e) {}
+  render();
+}
+
+$('apply').addEventListener('click', () => applyList($('input').value));
+$('examples').addEventListener('click', () => {
+  $('input').value = DE.join('\n');
+  applyList($('input').value);
+});
+['font', 'mode', 'lang', 'rows', 'size', 'roman'].forEach(id => $(id).addEventListener('input', render));
+['font', 'mode', 'lang', 'rows', 'roman'].forEach(id => $(id).addEventListener('change', render));
+$('print').addEventListener('click', () => window.print());
+
+let saved = null;
+try { saved = localStorage.getItem('schriftwort-liste'); } catch (e) {}
+$('input').value = saved || DEFAULT_LIST;
+applyList($('input').value);
+</script>
+</body>
+</html>
