@@ -25,6 +25,8 @@ import java.io.IOException
 class MainActivity : Activity() {
 
     private val requestPick = 1
+    private val requestExport = 2
+    private var pendingExport: File? = null
     private val entries = mutableListOf<File>()
     private lateinit var adapter: ArrayAdapter<String>
     private lateinit var titleView: TextView
@@ -148,7 +150,30 @@ class MainActivity : Activity() {
             }
             data.data?.let { uris.add(it) }
             importUris(uris)
+        } else if (requestCode == requestExport) {
+            val src = pendingExport
+            pendingExport = null
+            val target = data?.data
+            if (resultCode == RESULT_OK && src != null && target != null) {
+                try {
+                    val out = contentResolver.openOutputStream(target) ?: throw IOException("Kein Zugriff")
+                    out.use { o -> src.inputStream().use { it.copyTo(o) } }
+                    toast("„${titleOf(src)}“ exportiert")
+                } catch (e: Exception) {
+                    toast("Export fehlgeschlagen")
+                }
+            }
         }
+    }
+
+    private fun startExport(f: File) {
+        pendingExport = f
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/html"
+            putExtra(Intent.EXTRA_TITLE, "${titleOf(f)}.html")
+        }
+        startActivityForResult(intent, requestExport)
     }
 
     private fun importUris(uris: List<Uri>) {
@@ -239,7 +264,7 @@ class MainActivity : Activity() {
 
     private fun confirmDelete(f: File) {
         val isDir = f.isDirectory
-        AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this)
             .setTitle(if (isDir) "Ordner löschen?" else "App löschen?")
             .setMessage(
                 if (isDir) "„${f.name}“ mit allen Dateien darin wird gelöscht."
@@ -250,7 +275,10 @@ class MainActivity : Activity() {
                 refresh()
             }
             .setNegativeButton("Abbrechen", null)
-            .show()
+        if (!isDir) {
+            builder.setNeutralButton("Exportieren") { _, _ -> startExport(f) }
+        }
+        builder.show()
     }
 
     private fun toast(text: String) {
