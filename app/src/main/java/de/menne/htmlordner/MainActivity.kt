@@ -10,6 +10,7 @@ import android.provider.OpenableColumns
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
@@ -18,35 +19,46 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Startseite: zeigt alle gespeicherten HTML-Dateien.
- * Dateien werden dauerhaft im internen Speicher der App abgelegt.
+ * Startseite: zeigt Ordner und gespeicherte HTML-Dateien des aktuellen Ordners.
+ * Alles liegt dauerhaft im internen Speicher der App (filesDir/apps, Unterordner sind erlaubt).
  */
 class MainActivity : Activity() {
 
     private val requestPick = 1
-    private val files = mutableListOf<File>()
+    private val entries = mutableListOf<File>()
     private lateinit var adapter: ArrayAdapter<String>
+    private lateinit var titleView: TextView
+    private var current: File? = null
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
-    private fun appDir(): File = File(filesDir, "apps").apply { mkdirs() }
+    private fun rootDir(): File = File(filesDir, "apps").apply { mkdirs() }
+
+    private fun currentDir(): File = current ?: rootDir()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val titleView = TextView(this).apply {
+        current = savedInstanceState?.getString("dir")?.let { File(it) }?.takeIf { it.isDirectory }
+
+        titleView = TextView(this).apply {
             text = "Meine HTML-Apps"
             textSize = 22f
             setTextColor(Color.WHITE)
         }
 
         val addButton = Button(this).apply {
-            text = "＋ HTML-Datei hinzufügen"
+            text = "＋ HTML-Datei"
             setOnClickListener { pickFiles() }
         }
 
+        val folderButton = Button(this).apply {
+            text = "📁 Neuer Ordner"
+            setOnClickListener { showNewFolderDialog() }
+        }
+
         val hintView = TextView(this).apply {
-            text = "Tippen zum Öffnen · lange drücken zum Löschen"
+            text = "Ordner und Apps antippen · lange drücken zum Löschen · Zurück geht eine Ebene hoch"
             textSize = 13f
             setTextColor(0xFFAAB2C8.toInt())
         }
@@ -54,9 +66,17 @@ class MainActivity : Activity() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, ArrayList<String>())
         val listView = ListView(this)
         listView.adapter = adapter
-        listView.setOnItemClickListener { _, _, pos, _ -> openApp(files[pos]) }
+        listView.setOnItemClickListener { _, _, pos, _ ->
+            val f = entries[pos]
+            if (f.isDirectory) {
+                current = f
+                refresh()
+            } else {
+                openApp(f)
+            }
+        }
         listView.setOnItemLongClickListener { _, _, pos, _ ->
-            confirmDelete(files[pos])
+            confirmDelete(entries[pos])
             true
         }
 
@@ -66,8 +86,18 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(20), dp(16), dp(16))
         }
         val wrap = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val buttons = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        buttons.addView(addButton, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+            rightMargin = dp(4)
+        })
+        buttons.addView(folderButton, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+            leftMargin = dp(4)
+        })
+
         root.addView(titleView, wrap)
-        root.addView(addButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+        root.addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
             topMargin = dp(12)
             bottomMargin = dp(8)
         })
@@ -83,6 +113,21 @@ class MainActivity : Activity() {
         }
 
         refresh()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("dir", currentDir().absolutePath)
+    }
+
+    override fun onBackPressed() {
+        val dir = currentDir()
+        if (dir != rootDir()) {
+            current = dir.parentFile?.takeIf { it.absolutePath.startsWith(rootDir().absolutePath) } ?: rootDir()
+            refresh()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     private fun pickFiles() {
@@ -117,7 +162,7 @@ class MainActivity : Activity() {
             val base = name.substringBeforeLast('.')
                 .replace(Regex("[^A-Za-z0-9 _-]"), "_")
                 .ifBlank { "App" }
-            val target = File(appDir(), "${System.nanoTime()}__$base.html")
+            val target = File(currentDir(), "${System.nanoTime()}__$base.html")
             try {
                 val input = contentResolver.openInputStream(uri) ?: throw IOException("Kein Zugriff")
                 input.use { inp -> target.outputStream().use { out -> inp.copyTo(out) } }
@@ -138,17 +183,52 @@ class MainActivity : Activity() {
         return uri.lastPathSegment?.substringAfterLast('/')
     }
 
+    private fun showNewFolderDialog() {
+        val input = EditText(this).apply {
+            hint = "Ordnername"
+            setSingleLine(true)
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Neuer Ordner")
+            .setView(input)
+            .setPositiveButton("Anlegen") { _, _ -> createFolder(input.text.toString()) }
+            .setNegativeButton("Abbrechen", null)
+            .show()
+    }
+
+    private fun createFolder(raw: String) {
+        val name = raw.trim().replace(Regex("[\\\\/:*?\"<>|\\x00-\\x1F]"), "_").trimStart('.')
+        if (name.isBlank()) {
+            toast("Bitte einen Ordnernamen eingeben")
+            return
+        }
+        val target = File(currentDir(), name)
+        if (target.exists()) {
+            toast("„$name“ gibt es hier schon")
+            return
+        }
+        if (target.mkdirs()) {
+            toast("Ordner „$name“ angelegt")
+        } else {
+            toast("Ordner konnte nicht angelegt werden")
+        }
+        refresh()
+    }
+
     private fun refresh() {
-        files.clear()
-        files.addAll(
-            appDir().listFiles()
-                ?.filter { it.isFile && it.name.endsWith(".html") }
-                ?.sortedByDescending { it.lastModified() }
-                ?: emptyList()
+        val dir = currentDir()
+        val children = dir.listFiles() ?: emptyArray()
+        entries.clear()
+        entries.addAll(children.filter { it.isDirectory }.sortedBy { it.name.lowercase() })
+        entries.addAll(
+            children.filter { it.isFile && it.name.endsWith(".html") }
+                .sortedByDescending { it.lastModified() }
         )
         adapter.clear()
-        adapter.addAll(files.map { titleOf(it) })
+        adapter.addAll(entries.map { if (it.isDirectory) "📁  ${it.name}" else titleOf(it) })
         adapter.notifyDataSetChanged()
+
+        titleView.text = if (dir == rootDir()) "Meine HTML-Apps" else "Meine HTML-Apps / ${dir.name}"
     }
 
     private fun titleOf(f: File): String = f.name.substringAfter("__").removeSuffix(".html")
@@ -158,11 +238,15 @@ class MainActivity : Activity() {
     }
 
     private fun confirmDelete(f: File) {
+        val isDir = f.isDirectory
         AlertDialog.Builder(this)
-            .setTitle("App löschen?")
-            .setMessage(titleOf(f))
+            .setTitle(if (isDir) "Ordner löschen?" else "App löschen?")
+            .setMessage(
+                if (isDir) "„${f.name}“ mit allen Dateien darin wird gelöscht."
+                else titleOf(f)
+            )
             .setPositiveButton("Löschen") { _, _ ->
-                f.delete()
+                if (isDir) f.deleteRecursively() else f.delete()
                 refresh()
             }
             .setNegativeButton("Abbrechen", null)
